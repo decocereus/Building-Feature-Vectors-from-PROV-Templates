@@ -1,0 +1,82 @@
+{
+	"var" : {
+		"operation": [
+			{
+				"@id": "*",
+				"@documentation": "The operation identifier",
+				"@examplar": "pgo:op123"
+
+			}
+		],
+		"operation_type": [
+			{
+				"@id": "*",
+				"@documentation": "The operation type",
+				"@examplar": "pgo:OpType"
+			}
+		],
+		"time": [[
+			{
+				"@type": "xsd:int",
+				"@documentation": "The value of the time of the operation"
+			}
+		]],
+		"player_before":  [
+			{
+				"@id": "*",
+				"@documentation": "The player before",
+				"@examplar": "pgo:playerbefore34"
+			}
+		],
+		"player_type": [
+			{
+				"@id": "*",
+				"@documentation": "The player type",
+				"@examplar": "pgo:PlayerType"
+			}
+		],
+		"team":  [
+			{
+				"@id": "*",
+				"@documentation": "The player team",
+				"@examplar": "pgo:team123"
+			}
+		],
+		"pokestop_before":  [
+			{
+				"@id": "*",
+				"@documentation": "The pokestop before",
+				"@examplar": "pgo:pokestopbefore12"
+			}
+		],
+		"pokestop_type": [
+			{
+				"@id": "*",
+				"@documentation": "The pokestop type",
+				"@examplar": "pgo:PokestopType"
+			}
+		],
+		"player_after":  [
+			{
+				"@id": "*",
+				"@documentation": "The player after",
+				"@examplar": "pgo:playerafter34"
+
+			}
+		],
+		"pokestop_after":  [
+			{
+				"@id": "*",
+				"@documentation": "The pokestop after",
+				"@examplar": "pgo:pokestopafter12"
+			}
+		]
+	},
+	"vargen": {  },
+	"context": {
+		"pgo":    "http://sociam.org/pokemongo#",
+		"game":    "http://sociam.org/pokemongogame#",
+		"var":    "http://openprovenance.org/var#",
+		"vargen": "http://openprovenance.org/vargen#"
+	}
+}
