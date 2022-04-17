@@ -3,6 +3,8 @@ import pprint
 from collections import defaultdict, Counter
 from typing import Iterable, Dict, FrozenSet
 from itertools import chain
+import sys
+import os
 
 
 provTypes = ['activity', 'entity', 'agent']
@@ -23,6 +25,7 @@ SHORT_NAMES = {
 
 }
 
+# These sets are immutable, once something has been added it cannot be removed.
 FrozenSet = frozenset()
 PROV_TYPE_DICT = {}
 PROV_RELATION_DICT = {}
@@ -30,6 +33,10 @@ ADDITIONAL_TYPE_DICT = {}
 FingerPrint = set(SHORT_NAMES.keys())
 
 '''Main Functions'''
+
+'''
+This function grabs any additional identifiers associated with any entities, activities or agents present in the template
+'''
 
 
 def getAdditionalTypes(currentLine):
@@ -45,31 +52,48 @@ def getAdditionalTypes(currentLine):
                 continue
 
 
-def getTemplateInfo():
-    with open('files/template.provn') as fh:
-        for line in fh:
-            formattedTemplate = line.strip().replace(
-                '(', ',').replace('[', "").replace(']', "").replace(')', "").split(',')
-            checkType = formattedTemplate[0]
-            if checkType in provTypes:
-                typeToAdd = formattedTemplate[1][4:]
-                PROV_TYPE_DICT[typeToAdd] = checkType
-                getAdditionalTypes(formattedTemplate)
-            elif checkType in provRelations:
-                relation = formattedTemplate[0]
-                predecessor = formattedTemplate[1].strip()[4:]
-                successor = formattedTemplate[2].strip()[4:]
-                if relation in PROV_RELATION_DICT:
-                    PROV_RELATION_DICT[relation].append(
-                        [predecessor, successor])
-                else:
-                    PROV_RELATION_DICT[relation] = [[predecessor, successor]]
+'''
+This function extracts all important piece of information which is required for construting prov types
+'''
+
+
+def getTemplateInfo(path):
+    assert os.path.exists(
+        path), "I did not find the file at, "+str(path)
+    fh = open(path, 'r+')
+    print('Template found, constructing feature vector.')
+    for line in fh:
+        formattedTemplate = line.strip().replace(
+            '(', ',').replace('[', "").replace(']', "").replace(')', "").split(',')
+        checkType = formattedTemplate[0]
+        if checkType in provTypes:
+            typeToAdd = formattedTemplate[1][4:]
+            PROV_TYPE_DICT[typeToAdd] = checkType
+            getAdditionalTypes(formattedTemplate)
+        elif checkType in provRelations:
+            relation = formattedTemplate[0]
+            predecessor = formattedTemplate[1].strip()[4:]
+            successor = formattedTemplate[2].strip()[4:]
+            if relation in PROV_RELATION_DICT:
+                PROV_RELATION_DICT[relation].append(
+                    [predecessor, successor])
             else:
-                continue
+                PROV_RELATION_DICT[relation] = [[predecessor, successor]]
+        else:
+            continue
+    fh.close()
 
 
-def calculateProvenanceTypes(depth=0):
-    getTemplateInfo()
+'''
+This function first calculates the lvl 0 prov types, 
+builds the predecessor dict where we store the information about the relations and all the core prov types involved.
+
+Once that's done, we move on to calculating prov types upto the depth defined by the user.
+'''
+
+
+def calculateProvenanceTypes(path, depth=0):
+    getTemplateInfo(path)  # adds data to the global variables
     lvl0Types = defaultdict(set)
     predecessors = defaultdict(set)
 
@@ -85,9 +109,12 @@ def calculateProvenanceTypes(depth=0):
     # rel_type: [pred, succ] in provRelationType
     # succ: (rel, pred) in predecessors
     flatProvTypes = defaultdict(dict)
+    # building lvl 0 types
     flatProvTypes[0] = {node: (frozenset(lvl0Types[node]),)
                         for node in lvl0Types}
+
     for k in range(1, depth+1):
+        # important note, we start from 1 and not 0 since we have already built the lvl0 types
         for node, types in flatProvTypes[k-1].items():
             for relation, pred in predecessors[node]:
                 currentType = types + (frozenset({relation}), )
@@ -97,14 +124,19 @@ def calculateProvenanceTypes(depth=0):
     return flatProvTypes
 
 
-def countProvTypeFreq(flatProvTypes: Iterable) -> Dict[str, int]:
+'''Counting and formatting each prov type's frequency'''
 
+
+def countProvTypeFreq(flatProvTypes: Iterable) -> Dict[str, int]:
     counter = Counter(flatProvTypes)
     return {formatProvTypes(t): count for t, count in counter.items()}
 
 
-def buildFeatureVector(depth=0):
-    provTypes = calculateProvenanceTypes(depth)
+'''The driver function for the whole script'''
+
+
+def buildFeatureVector(path, depth=0):
+    provTypes = calculateProvenanceTypes(path, depth)
     return countProvTypeFreq(chain.from_iterable(provLevel.values() for provLevel in provTypes.values()))
 
 
@@ -115,6 +147,8 @@ def buildFeatureVector(depth=0):
 This functions joins two prov types of equal lengths.
 It serves the purpose of joining types which are of equal length. 
 Through this function we can create different groups for relations and core prov types.
+
+These functions are taken from 'https://github.com/trungdong/provenance-kernel-evaluation/blob/master/scripts/flatprovenancetypes.py'
 '''
 
 
@@ -145,5 +179,9 @@ def formatProvTypes(type):
 
 
 if __name__ == "__main__":
-    featureVector = buildFeatureVector(3)
+    path = str(input('Path: '))
+    depth = int(input('depth: '))
+    featureVector = buildFeatureVector(path, depth)
+    print('')
+    print('Feature vector: ')
     pprint.pprint(featureVector)
