@@ -1,7 +1,7 @@
-import json
+
 import pprint
 from collections import defaultdict, Counter
-from typing import Iterable, Dict
+from typing import Iterable, Dict, FrozenSet
 from itertools import chain
 
 
@@ -23,34 +23,24 @@ SHORT_NAMES = {
 
 }
 
-
+FrozenSet = frozenset()
 PROV_TYPE_DICT = {}
 PROV_RELATION_DICT = {}
-ADDITONAL_TYPE_DICT = {}
+ADDITIONAL_TYPE_DICT = {}
 FingerPrint = set(SHORT_NAMES.keys())
 
 '''Main Functions'''
 
 
-def getPropertyOrder():
-    f = open('files/propertyOrder.json')
-    data = json.load(f)
-    propertyOrder = []
-    for i in data['var']:
-        propertyOrder.append(i)
-    f.close()
-    return propertyOrder
-
-
-def getAddionalTypes(currentLine):
+def getAdditionalTypes(currentLine):
     currentPropType = currentLine[1][4:]  # key
     for element in currentLine[2:]:
         if element != '-':
             element.strip()
             provType = element.split('=')
             if provType[0] == 'prov:type ':
-                addtionalType = provType[1].strip()[5:].replace('\'', "")
-                ADDITONAL_TYPE_DICT[currentPropType] = addtionalType
+                additionalType = provType[1].strip()[5:].replace('\'', "")
+                ADDITIONAL_TYPE_DICT[currentPropType] = additionalType
             else:
                 continue
 
@@ -64,7 +54,7 @@ def getTemplateInfo():
             if checkType in provTypes:
                 typeToAdd = formattedTemplate[1][4:]
                 PROV_TYPE_DICT[typeToAdd] = checkType
-                getAddionalTypes(formattedTemplate)
+                getAdditionalTypes(formattedTemplate)
             elif checkType in provRelations:
                 relation = formattedTemplate[0]
                 predecessor = formattedTemplate[1].strip()[4:]
@@ -83,12 +73,10 @@ def calculateProvenanceTypes(depth=0):
     lvl0Types = defaultdict(set)
     predecessors = defaultdict(set)
 
-    propertyOrder = getPropertyOrder()
-
-    for prop in propertyOrder:
+    for prop in PROV_TYPE_DICT.keys():
         if prop in PROV_TYPE_DICT.keys():
-            lvl0Types[prop].add((PROV_TYPE_DICT[prop], ADDITONAL_TYPE_DICT[prop]
-                                 if prop in ADDITONAL_TYPE_DICT else None))
+            lvl0Types[prop].add((PROV_TYPE_DICT[prop], ADDITIONAL_TYPE_DICT[prop]
+                                 if prop in ADDITIONAL_TYPE_DICT else None))
 
     for rel, types in PROV_RELATION_DICT.items():
         for pred, succ in types:
@@ -97,13 +85,12 @@ def calculateProvenanceTypes(depth=0):
     # rel_type: [pred, succ] in provRelationType
     # succ: (rel, pred) in predecessors
     flatProvTypes = defaultdict(dict)
-    flatProvTypes[0] = {node: (set(lvl0Types[node]),)
+    flatProvTypes[0] = {node: (frozenset(lvl0Types[node]),)
                         for node in lvl0Types}
-
     for k in range(1, depth+1):
         for node, types in flatProvTypes[k-1].items():
             for relation, pred in predecessors[node]:
-                currentType = types + (set({relation}), )
+                currentType = types + (frozenset({relation}), )
                 flatProvTypes[k][pred] = (joinFlatTypes(
                     flatProvTypes[k][pred], currentType) if pred in flatProvTypes[k] else currentType)
 
@@ -113,17 +100,22 @@ def calculateProvenanceTypes(depth=0):
 def countProvTypeFreq(flatProvTypes: Iterable) -> Dict[str, int]:
 
     counter = Counter(flatProvTypes)
-    return {formatProvTypes(t): count for t, count in counter}
+    return {formatProvTypes(t): count for t, count in counter.items()}
 
 
 def buildFeatureVector(depth=0):
     provTypes = calculateProvenanceTypes(depth)
-    print(chain.from_iterable(provLevel.values()
-          for provLevel in provTypes.values()))
     return countProvTypeFreq(chain.from_iterable(provLevel.values() for provLevel in provTypes.values()))
 
 
 '''Utility Functions'''
+
+
+'''
+This functions joins two prov types of equal lengths.
+It serves the purpose of joining types which are of equal length. 
+Through this function we can create different groups for relations and core prov types.
+'''
 
 
 def joinFlatTypes(type1, type2):
@@ -135,6 +127,9 @@ def joinFlatTypes(type1, type2):
     return tuple(val1 | val2 for val1, val2 in zip(type1, type2))
 
 
+'''These function are purely for formatting the prov types in more readable way.'''
+
+
 def formatFingerPrint(f):
     try:
         types = sorted(SHORT_NAMES[qn] for qn in f)
@@ -142,7 +137,7 @@ def formatFingerPrint(f):
         types = sorted(SHORT_NAMES[qn] for qn in f if qn in SHORT_NAMES)
         additionalTypes = sorted([qn for qn in f if qn not in SHORT_NAMES])
         types.extend(additionalTypes)
-    return '[' + '|'.join(types) + ']'
+    return '[' + '|'.join(str(t) for t in types) + ']'
 
 
 def formatProvTypes(type):
