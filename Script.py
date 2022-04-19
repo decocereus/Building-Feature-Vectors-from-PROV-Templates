@@ -1,7 +1,8 @@
 
 import pprint
 from collections import defaultdict, Counter
-from typing import Iterable, Dict, FrozenSet
+from tokenize import String
+from typing import Iterable, Dict, FrozenSet, Set, Tuple, List
 from itertools import chain
 import sys
 import os
@@ -44,7 +45,7 @@ This function grabs any additional identifiers associated with any entities, act
 '''
 
 
-def getAdditionalTypes(currentLine):
+def getAdditionalTypes(currentLine: List):
     currentPropType = currentLine[1][4:]  # key
     for element in currentLine[2:]:
         if element != '-':
@@ -62,13 +63,13 @@ This function extracts all important piece of information which is required for 
 '''
 
 
-def getTemplateInfo(path):
+def getTemplateInfo(path: str):
 
     provTypes = ['activity', 'entity', 'agent']
     provRelations = ['wasDerivedFrom', 'used', 'wasInformedBy', "wasGeneratedBy",
                      'wasAttributedTo', 'wasAssociatedWith', 'actedOnBehalfOf']
     assert os.path.exists(
-        path), "I did not find the file at, "+str(path)
+        path), "I did not find the file at, " + str(path)
     fh = open(path, 'r+')
     print('Template found, constructing feature vector.')
     for line in fh:
@@ -101,7 +102,7 @@ Once that's done, we move on to calculating prov types upto the depth defined by
 '''
 
 
-def calculateProvenanceTypes(path, depth=0):
+def calculateProvenanceTypes(path: str, depth: int = 0):
     getTemplateInfo(path)  # adds data to the global variables
     lvl0Types = defaultdict(set)
     predecessors = defaultdict(set)
@@ -144,7 +145,7 @@ def countProvTypeFreq(flatProvTypes: Iterable) -> Dict[str, int]:
 '''The driver function for the whole script'''
 
 
-def buildFeatureVector(path, depth=0):
+def buildFeatureVector(path: String, depth: int = 0) -> Dict[str, int]:
     provTypes = calculateProvenanceTypes(path, depth)
     return countProvTypeFreq(chain.from_iterable(provLevel.values() for provLevel in provTypes.values()))
 
@@ -173,7 +174,7 @@ def joinFlatTypes(type1, type2):
 '''These function are purely for formatting the prov types in more readable way.'''
 
 
-def formatFingerPrint(f):
+def formatFingerPrint(f: FingerPrint) -> str:
     try:
         types = sorted(SHORT_NAMES[qn] for qn in f)
     except KeyError:
@@ -183,13 +184,19 @@ def formatFingerPrint(f):
     return '[' + '|'.join(str(t) for t in types) + ']'
 
 
-def formatProvTypes(type):
+def formatProvTypes(type) -> str:
     return "→".join(map(formatFingerPrint, reversed(type)))
 
 
 if __name__ == "__main__":
-    path = str(input('Path: '))
-    depth = int(input('depth: '))
+    path = str(input('File path for template: '))
+    if 'provn' not in path:
+        print('Please provide a valid file.')
+        sys.exit()
+    depth = int(input('Calculation depth: '))
+    if type(depth) != int:
+        print('Please provide a valid depth.')
+        sys.exit()
     featureVector = buildFeatureVector(path, depth)
     print('')
     print('Feature vector: ')
