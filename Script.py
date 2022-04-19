@@ -101,6 +101,9 @@ builds the predecessor dict where we store the information about the relations a
 Once that's done, we move on to calculating prov types upto the depth defined by the user.
 '''
 
+# This solution was inspired by the solution available at 'https://github.com/trungdong/provenance-kernel-evaluation/blob/master/scripts/flatprovenancetypes.py'
+# Author of GitHub repository: Dong Huynh
+
 
 def calculateProvenanceTypes(path: str, depth: int = 0):
     getTemplateInfo(path)  # adds data to the global variables
@@ -159,6 +162,7 @@ It serves the purpose of joining types which are of equal length.
 Through this function we can create different frozen sets for relations and core prov types.
 
 These functions are taken from 'https://github.com/trungdong/provenance-kernel-evaluation/blob/master/scripts/flatprovenancetypes.py'
+Author of GitHub repository: Dong Huynh
 '''
 
 
