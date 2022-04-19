@@ -7,10 +7,6 @@ import sys
 import os
 
 
-provTypes = ['activity', 'entity', 'agent']
-provRelations = ['wasDerivedFrom', 'used', 'wasInformedBy', "wasGeneratedBy",
-                 'wasAttributedTo', 'wasAssociatedWith', 'actedOnBehalfOf']
-
 SHORT_NAMES = {
     'entity': 'ent',
     'activity': 'act',
@@ -21,9 +17,18 @@ SHORT_NAMES = {
     "wasGeneratedBy": 'gen',
     'wasAttributedTo': 'att',
     'wasAssociatedWith': 'waw',
-    'actedOnBehalfOf': 'del'
-
+    'actedOnBehalfOf': 'del',
+    'wasInformedBy': 'wib',
+    'wasStartedBy': 'wsb',
+    'wasEndedBy': 'web',
+    'wasInvalidatedBy': 'inv',
+    'wasInfluencedBy': 'inf',
+    'alternateOf': 'alt',
+    'specializationOf': 'spe',
+    'hadMember': 'mem',
+    'mentionOf': 'men'
 }
+
 
 # These sets are immutable, once something has been added it cannot be removed.
 FrozenSet = frozenset()
@@ -58,6 +63,10 @@ This function extracts all important piece of information which is required for 
 
 
 def getTemplateInfo(path):
+
+    provTypes = ['activity', 'entity', 'agent']
+    provRelations = ['wasDerivedFrom', 'used', 'wasInformedBy', "wasGeneratedBy",
+                     'wasAttributedTo', 'wasAssociatedWith', 'actedOnBehalfOf']
     assert os.path.exists(
         path), "I did not find the file at, "+str(path)
     fh = open(path, 'r+')
@@ -85,7 +94,7 @@ def getTemplateInfo(path):
 
 
 '''
-This function first calculates the lvl 0 prov types, 
+This function first calculates the lvl 0 prov types,
 builds the predecessor dict where we store the information about the relations and all the core prov types involved.
 
 Once that's done, we move on to calculating prov types upto the depth defined by the user.
@@ -145,8 +154,8 @@ def buildFeatureVector(path, depth=0):
 
 '''
 This functions joins two prov types of equal lengths.
-It serves the purpose of joining types which are of equal length. 
-Through this function we can create different groups for relations and core prov types.
+It serves the purpose of joining types which are of equal length.
+Through this function we can create different frozen sets for relations and core prov types.
 
 These functions are taken from 'https://github.com/trungdong/provenance-kernel-evaluation/blob/master/scripts/flatprovenancetypes.py'
 '''
