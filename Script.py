@@ -107,7 +107,8 @@ builds the predecessor dict where we store the information about the relations a
 Once that's done, we move on to calculating prov types upto the depth defined by the user.
 '''
 
-# This solution was inspired by the solution available at 'https://github.com/trungdong/provenance-kernel-evaluation/blob/master/scripts/flatprovenancetypes.py'
+# This solution was inspired by the solution available at:
+# 'https://github.com/trungdong/provenance-kernel-evaluation/blob/master/scripts/flatprovenancetypes.py'
 # Author of GitHub repository: Dong Huynh
 
 
@@ -117,9 +118,8 @@ def calculateProvenanceTypes(path: str, depth: int = 0):
     predecessors = defaultdict(set)
 
     for prop in PROV_TYPE_DICT.keys():
-        if prop in PROV_TYPE_DICT.keys():
-            lvl0Types[prop].add((PROV_TYPE_DICT[prop], ADDITIONAL_TYPE_DICT[prop]
-                                 if prop in ADDITIONAL_TYPE_DICT else None))
+        lvl0Types[prop].add((PROV_TYPE_DICT[prop], ADDITIONAL_TYPE_DICT[prop]
+                             if prop in ADDITIONAL_TYPE_DICT else None))
 
     for rel, types in PROV_RELATION_DICT.items():
         for pred, succ in types:
