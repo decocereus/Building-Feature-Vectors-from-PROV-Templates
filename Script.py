@@ -31,12 +31,13 @@ SHORT_NAMES = {
 }
 
 
-# These sets are immutable, once something has been added it cannot be removed.
+# custom types # Frozensets are immutable, once something has been added it cannot be removed.
 FrozenSet = frozenset()
-PROV_TYPE_DICT = {}
-PROV_RELATION_DICT = {}
-ADDITIONAL_TYPE_DICT = {}
 FingerPrint = set(SHORT_NAMES.keys())
+PROV_TYPE_DICT = {}  # {node name: node type}
+PROV_RELATION_DICT = {}  # {relation : [[predecessor node, successor node]]}
+ADDITIONAL_TYPE_DICT = {}  # {node name: additional identifier}
+
 
 '''Main Functions'''
 
@@ -66,8 +67,13 @@ This function extracts all important piece of information which is required for 
 def getTemplateInfo(path: str):
 
     provTypes = ['activity', 'entity', 'agent']
-    provRelations = ['wasDerivedFrom', 'used', 'wasInformedBy', "wasGeneratedBy",
-                     'wasAttributedTo', 'wasAssociatedWith', 'actedOnBehalfOf']
+    provRelations = [
+        'wasDerivedFrom', 'used', 'wasInformedBy', "wasGeneratedBy",
+        'wasAttributedTo', 'wasAssociatedWith',
+        'actedOnBehalfOf', 'wasInformedBy', 'wasStartedBy',
+        'wasEndedBy', 'wasInvalidatedBy', 'wasInfluencedBy',
+        'alternateOf', 'specializationOf', 'hadMember', 'mentionOf'
+    ]
     assert os.path.exists(
         path), "I did not find the file at, " + str(path)
     fh = open(path, 'r+')
